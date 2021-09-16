@@ -7,6 +7,7 @@ import {
   Keyboard,
   Platform,
   LayoutChangeEvent,
+  EmitterSubscription,
 } from 'react-native';
 import SafeAreaView from 'react-native-safe-area-view';
 import { ThemeColors, ThemeContext, NavigationRoute } from 'react-navigation';
@@ -114,24 +115,28 @@ class TabBarBottom extends React.Component<BottomTabBarProps, State> {
     visible: new Animated.Value(1),
   };
 
+  listeners: EmitterSubscription[] = [];
+
   componentDidMount() {
     if (Platform.OS === 'ios') {
-      Keyboard.addListener('keyboardWillShow', this._handleKeyboardShow);
-      Keyboard.addListener('keyboardWillHide', this._handleKeyboardHide);
+      this.listeners.push(
+        Keyboard.addListener('keyboardWillShow', this._handleKeyboardShow),
+        Keyboard.addListener('keyboardWillHide', this._handleKeyboardHide)
+      );
     } else {
-      Keyboard.addListener('keyboardDidShow', this._handleKeyboardShow);
-      Keyboard.addListener('keyboardDidHide', this._handleKeyboardHide);
+      this.listeners.push(
+        Keyboard.addListener('keyboardDidShow', this._handleKeyboardShow),
+        Keyboard.addListener('keyboardDidHide', this._handleKeyboardHide)
+      );
     }
   }
 
   componentWillUnmount() {
-    if (Platform.OS === 'ios') {
-      Keyboard.removeListener('keyboardWillShow', this._handleKeyboardShow);
-      Keyboard.removeListener('keyboardWillHide', this._handleKeyboardHide);
-    } else {
-      Keyboard.removeListener('keyboardDidShow', this._handleKeyboardShow);
-      Keyboard.removeListener('keyboardDidHide', this._handleKeyboardHide);
-    }
+    this.listeners.forEach(listener => {
+      if (listener) {
+        listener.remove();
+      }
+    });
   }
 
   // @ts-ignore
